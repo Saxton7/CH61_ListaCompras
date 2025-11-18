@@ -8,10 +8,12 @@ const productosTotal=document.getElementById("productosTotal");
 const precioTotal=document.getElementById("precioTotal");
 const tablaListaCompras = document.getElementById("tablaListaCompras");
 const cuerpoTabla = tablaListaCompras.getElementsByTagName("tbody").item(0);
+const btnClear = document.getElementById("btnClear");
 
 let cont = 0;
 let totalEnProductos = 0;
 let costoTotal = 0;
+let datos = new Array;
 
 function validarCantidad(cantidad){
     if(cantidad.length==0){
@@ -38,7 +40,6 @@ btnAgregar.addEventListener("click", function(event){
     alertValidacionesTexto.innerHTML= "";
     alertValidaciones.style.display = "none";
 
-    
     if(txtName.value.length <3){
         txtName.style.border = "solid medium red";
         alertValidacionesTexto.innerHTML= "<strong>El nombre del producto no es correcto</strong><br/>";
@@ -65,6 +66,16 @@ btnAgregar.addEventListener("click", function(event){
                     <td>${precio}</td>
                 </tr>`;
 
+        let elemento = {
+            "cont": cont,
+            "nombre": txtName.value,
+            "cantidad": txtNumber.value,
+            "precio": precio
+        };
+
+        datos.push(elemento);
+        localStorage.setItem("datos",JSON.stringify(datos));
+
         totalEnProductos+= Number(txtNumber.value);
         costoTotal += precio * Number (txtNumber.value);
 
@@ -72,7 +83,7 @@ btnAgregar.addEventListener("click", function(event){
         contadorProductos.innerText = cont;
         productosTotal.innerText = totalEnProductos;
         precioTotal.innerText=new Intl.NumberFormat("es-MX", 
-            { style: "currency", currency: "MXN" }).format(costoTotal);
+        { style: "currency", currency: "MXN" }).format(costoTotal);
         
         let resumen = {
             "cont" : cont,
@@ -91,16 +102,71 @@ btnAgregar.addEventListener("click", function(event){
 window.addEventListener("load",function(event){
     event.preventDefault();
 
+    if(this.localStorage.getItem("datos") != null){
+        datos = JSON.parse(this.localStorage.getItem("datos"));
+        datos.forEach((e)=>{
+            let row = `<tr>
+                    <td>${e.cont}</td>
+                    <td>${e.nombre}</td>
+                    <td>${e.cantidad}</td>
+                    <td>${e.precio}</td>
+                </tr>`;
+            cuerpoTabla.insertAdjacentHTML("beforeend", row);
+        });
+    }//datos !=null
+
     if(this.localStorage.getItem("resumen") != null){
 
         let resumen = JSON.parse(this.localStorage.getItem("resumen"));
         cont = resumen.cont;
         totalEnProductos = resumen.totalEnProductos;
         costoTotal = resumen.costoTotal;
-    }//!=null
+    }//resumen !=null
 
-        contadorProductos.innerText = cont;
-        productosTotal.innerText = totalEnProductos;
-        precioTotal.innerText=new Intl.NumberFormat("es-MX", 
-        {style: "currency", currency: "MXN"}).format(costoTotal);
+    contadorProductos.innerText = cont;
+    productosTotal.innerText = totalEnProductos;
+    precioTotal.innerText=new Intl.NumberFormat("es-MX", 
+    {style: "currency", currency: "MXN"}).format(costoTotal);
 }); //window load
+ 
+    // Botón clear 
+
+btnClear.addEventListener("click", function(event){
+    event.preventDefault();
+
+    // Limpiar inputs
+    txtName.value = "";
+    txtNumber.value = "";
+
+    // Quitar bordes
+    txtName.style.border = "";
+    txtNumber.style.border = "";
+
+    // Ocultar alertas
+    alertValidacionesTexto.innerHTML = "";
+    alertValidaciones.style.display = "none";
+
+    // Limpiar tabla
+    cuerpoTabla.innerHTML = "";
+
+    // Reiniciar variables
+    cont = 0;
+    totalEnProductos = 0;
+    costoTotal = 0;
+    datos = [];
+
+    // Actualizar UI
+    contadorProductos.innerText = 0;
+    productosTotal.innerText = 0;
+    precioTotal.innerText = new Intl.NumberFormat("es-MX",
+        {style: "currency", currency: "MXN"}
+    ).format(0);
+
+    // Limpiar localStorage
+    localStorage.removeItem("datos");
+    localStorage.removeItem("resumen");
+    localStorage.removeItem("carrito");
+
+    // Enfocar el primer input
+    txtName.focus();
+});
